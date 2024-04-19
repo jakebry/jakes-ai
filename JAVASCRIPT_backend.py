@@ -21,11 +21,9 @@ logging.basicConfig(level=logging.INFO)
 ebay_url = "https://www.ebay.ca/sch/i.html?_from=R40&_nkw=Pokemon+Cards&_sacat=0&_sop=1&_ipg=60"
 
 def setup_driver():
-    # Set up ChromeDriver
-    chrome_options = Options()
-    chrome_options.add_argument('user-agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"')
-    webdriver_service = Service('./chromedriver')  # Replace with the path to your ChromeDriver
-    driver = webdriver.Chrome(service=webdriver_service, options=chrome_options)
+    options = Options()
+    options.add_argument("--headless")
+    driver = webdriver.Chrome(service=Service('/.chromedriver'), options=options)
     return driver
 
 def fetch_page(driver, url):
