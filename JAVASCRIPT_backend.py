@@ -23,7 +23,7 @@ ebay_url = "https://www.ebay.ca/sch/i.html?_from=R40&_nkw=Pokemon+Cards&_sacat=0
 def setup_driver():
     options = Options()
     options.add_argument("--headless")
-    driver = webdriver.Chrome(service=Service('/.chromedriver'), options=options)
+    driver = webdriver.Chrome(service=Service('/usr/local/bin/chromedriver-linux64'), options=options)
     return driver
 
 def fetch_page(driver, url):
