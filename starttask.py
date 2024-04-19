@@ -23,6 +23,8 @@ ebay_url = "https://www.ebay.ca/sch/i.html?_from=R40&_nkw=Pokemon+Cards&_sacat=0
 def setup_driver():
     options = Options()
     options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
     options.binary_location = './chrome-headless-shell' 
     driver = webdriver.Chrome(service=Service('./chromedriver'), options=options)
     return driver
