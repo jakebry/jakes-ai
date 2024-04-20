@@ -13,12 +13,30 @@ import urllib.parse
 import psycopg2
 from datetime import timedelta
 from selenium import webdriver
+from google.cloud import firestore
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
 # eBay URL to scrape
 ebay_url = "https://www.ebay.ca/sch/i.html?_from=R40&_nkw=Pokemon+Cards&_sacat=0&_sop=1&_ipg=60"
+
+def initialize_firestore():
+    # Use the application default credentials
+    db = firestore.Client()
+    logging.info("Initialized Firestore client")
+    return db
+
+def insert_item_details(db, title, total_price, bids, time_left, average_price):
+    doc_ref = db.collection('items').document()
+    doc_ref.set({
+        'title': title,
+        'total_price': total_price,
+        'bids': bids,
+        'time_left': time_left,
+        'average_price': average_price
+    })
+    logging.info(f"Inserted item details into Firestore: {title}, {total_price}, {bids}, {time_left}, {average_price}")
 
 def setup_driver():
     options = Options()
@@ -199,6 +217,7 @@ def scrape_ebay():
         fetch_page(driver, ebay_url)
         soup = parse_page(driver)
         items = extract_items(soup)
+        db = initialize_firestore()  # Initialize Firestore
 
         for item in items:
             title, price_str, shipping_cost_str, time_left_str, bids = extract_item_details(item)
@@ -210,7 +229,11 @@ def scrape_ebay():
                 sold_item_prices = extract_sold_items(driver)
                 average_price = sum(sold_item_prices) / len(sold_item_prices) if sold_item_prices else 0
                 print_item_details(title, total_price, bids, time_left_str, average_price)
-                print_steal_or_pass(total_price, average_price)
+                if total_price <= 0.6 * average_price:
+                    print("Steal")
+                    insert_item_details(db, title, total_price, bids, time_left_str, average_price)  # Insert item details into Firestore
+                else:
+                    print("Pass")
 
         driver.quit()
     except Exception as e:
