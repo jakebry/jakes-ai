@@ -25,8 +25,8 @@ def setup_driver():
     options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
-    options.binary_location = './chrome-headless-shell' 
-    driver = webdriver.Chrome(service=Service('./chromedriver'), options=options)
+    options.binary_location = '/home/vancouvercardboys/venv/chrome-headless-shell-linux64/chrome-headless-shell' 
+    driver = webdriver.Chrome(service=Service('/home/vancouvercardboys/venv/chromedriver'), options=options)
     return driver
 
 def fetch_page(driver, url):
