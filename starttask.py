@@ -237,6 +237,7 @@ def scrape_ebay():
         gc = initialize_gspread()  # Initialize Google Sheets
 
         any_steals = False  # Add this line
+        average_price = 0  # Initialize average_price
 
         page_number = 1
         while True:
