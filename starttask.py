@@ -13,7 +13,7 @@ import urllib.parse
 import psycopg2
 from datetime import timedelta
 from selenium import webdriver
-from google.cloud import firestore
+import mysql.connector
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -21,22 +21,42 @@ logging.basicConfig(level=logging.INFO)
 # eBay URL to scrape
 ebay_url = "https://www.ebay.ca/sch/i.html?_from=R40&_nkw=Pokemon+Cards&_sacat=0&_sop=1&_ipg=60"
 
-def initialize_firestore():
-    # Use the application default credentials
-    db = firestore.Client()
-    logging.info("Initialized Firestore client")
+def initialize_mysql():
+    db = mysql.connector.connect(
+        host="127.0.0.1",
+        port=3306,
+        user="root",
+        password="jahaka961",
+        database="steals"
+    )
+    logging.info("Initialized MySQL connection")
     return db
 
+def create_table(db):
+    cursor = db.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS items (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            title VARCHAR(255),
+            total_price DECIMAL(10, 2),
+            bids INT,
+            time_left VARCHAR(255),
+            average_price DECIMAL(10, 2)
+        )
+    """)
+    db.commit()
+    logging.info("Created table")
+
 def insert_item_details(db, title, total_price, bids, time_left, average_price):
-    doc_ref = db.collection('items').document()
-    doc_ref.set({
-        'title': title,
-        'total_price': total_price,
-        'bids': bids,
-        'time_left': time_left,
-        'average_price': average_price
-    })
-    logging.info(f"Inserted item details into Firestore: {title}, {total_price}, {bids}, {time_left}, {average_price}")
+    cursor = db.cursor()
+    query = """
+        INSERT INTO items (title, total_price, bids, time_left, average_price)
+        VALUES (%s, %s, %s, %s, %s)
+    """
+    values = (title, total_price, bids, time_left, average_price)
+    cursor.execute(query, values)
+    db.commit()
+    logging.info(f"Inserted item details into MySQL: {title}, {total_price}, {bids}, {time_left}, {average_price}")
 
 def setup_driver():
     options = Options()
@@ -202,8 +222,13 @@ def extract_sold_items(driver):
     print(f"Calculated average price: {average_price}")
     return total_prices
 
-def print_item_details(title, total_price, bids, time_left, average_price):
-    print(f"Item details:\nTitle: {title}\nTotal Price: {total_price}\nBids: {bids}\nTime left: {time_left}\nAverage price: {average_price}")
+def insert_item_details(db, title, total_price, bids, time_left, average_price):
+    cursor = db.cursor()
+    sql = "INSERT INTO items (title, total_price, bids, time_left, average_price) VALUES (%s, %s, %s, %s, %s)"
+    val = (title, total_price, bids, time_left, average_price)
+    cursor.execute(sql, val)
+    db.commit()
+    logging.info(f"Inserted item details into MySQL: {title}, {total_price}, {bids}, {time_left}, {average_price}")
 
 def print_steal_or_pass(total_price, average_price):
     if total_price <= 0.6 * average_price:
@@ -214,7 +239,7 @@ def print_steal_or_pass(total_price, average_price):
 def scrape_ebay():
     try:
         driver = setup_driver()
-        db = initialize_firestore()  # Initialize Firestore
+        db = initialize_mysql()  # Initialize MySQL
 
         any_steals = False  # Add this line
 
@@ -238,7 +263,7 @@ def scrape_ebay():
                     if total_price <= 0.6 * average_price:
                         print("Steal")
                         any_steals = True  # Add this line
-                        insert_item_details(db, title, total_price, bids, time_left_str, average_price)  # Insert item details into Firestore
+                        insert_item_details(db, title, total_price, bids, time_left_str, average_price)  # Insert item details into MySQL
                     else:
                         print("Pass")
 
