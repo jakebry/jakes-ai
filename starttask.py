@@ -214,26 +214,37 @@ def print_steal_or_pass(total_price, average_price):
 def scrape_ebay():
     try:
         driver = setup_driver()
-        fetch_page(driver, ebay_url)
-        soup = parse_page(driver)
-        items = extract_items(soup)
         db = initialize_firestore()  # Initialize Firestore
 
-        for item in items:
-            title, price_str, shipping_cost_str, time_left_str, bids = extract_item_details(item)
-            time_left = convert_time_left(time_left_str)
-            total_price = calculate_total_price(price_str, shipping_cost_str)
+        page_number = 1
+        while True:
+            current_url = f"{ebay_url}&_pgn={page_number}"
+            fetch_page(driver, current_url)
+            soup = parse_page(driver)
+            items = extract_items(soup)
 
-            if time_left is not None and timedelta(minutes=9) <= time_left <= timedelta(minutes=10):
-                fetch_sold_items_page(driver, title)
-                sold_item_prices = extract_sold_items(driver)
-                average_price = sum(sold_item_prices) / len(sold_item_prices) if sold_item_prices else 0
-                print_item_details(title, total_price, bids, time_left_str, average_price)
-                if total_price <= 0.6 * average_price:
-                    print("Steal")
-                    insert_item_details(db, title, total_price, bids, time_left_str, average_price)  # Insert item details into Firestore
-                else:
-                    print("Pass")
+            for item in items:
+                title, price_str, shipping_cost_str, time_left_str, bids = extract_item_details(item)
+                time_left = convert_time_left(time_left_str)
+                total_price = calculate_total_price(price_str, shipping_cost_str)
+
+                if time_left is not None and timedelta(minutes=9) <= time_left <= timedelta(minutes=10):
+                    fetch_sold_items_page(driver, title)
+                    sold_item_prices = extract_sold_items(driver)
+                    average_price = sum(sold_item_prices) / len(sold_item_prices) if sold_item_prices else 0
+                    print_item_details(title, total_price, bids, time_left_str, average_price)
+                    if total_price <= 0.6 * average_price:
+                        print("Steal")
+                        insert_item_details(db, title, total_price, bids, time_left_str, average_price)  # Insert item details into Firestore
+                    else:
+                        print("Pass")
+
+            # Check if there's a next page. If not, break the loop.
+            next_page_element = driver.find_elements(By.XPATH, '//a[@class="pagination__next"]')
+            if not next_page_element:
+                break
+
+            page_number += 1
 
         driver.quit()
     except Exception as e:
