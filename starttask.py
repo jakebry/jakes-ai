@@ -13,7 +13,6 @@ import urllib.parse
 import psycopg2
 from datetime import timedelta
 from selenium import webdriver
-import mysql.connector
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
@@ -236,7 +235,6 @@ def print_steal_or_pass(total_price, average_price):
         print("Pass")
 
 def scrape_ebay():
-    average_price = 0  # Initialize average_price
     try:
         driver = setup_driver()
         gc = initialize_gspread()  # Initialize Google Sheets
@@ -252,6 +250,7 @@ def scrape_ebay():
             items = extract_items(soup)
 
             for item in items:
+                average_price = 0  # Initialize average_price
                 title, price_str, shipping_cost_str, time_left_str, bids = extract_item_details(item)
                 time_left = convert_time_left(time_left_str)
                 total_price = calculate_total_price(price_str, shipping_cost_str)
