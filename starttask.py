@@ -73,7 +73,10 @@ def fetch_page(driver, url):
     # Fetch eBay page
     driver.get(url)
     logging.info(f"Fetching page: {url}")
-    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//div[contains(@class, "s-item__wrapper")]')))
+    try:
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//div[contains(@class, "s-item__wrapper")]')))
+    except Exception as e:
+        logging.error(f"Error fetching page {url}: {e}")
 
 def parse_page(driver):
     # Parse page source with BeautifulSoup
@@ -185,12 +188,13 @@ def fetch_sold_items_page(driver, title):
 
     # Navigate to the search URL
     driver.get(search_url)
+    logging.info(f"Fetching sold items page: {search_url}")
 
     try:
         # Wait for the page to load and the title element to be present
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//div[@class="s-item__title"]/span[@role="heading" and @aria-level="3"]')))
     except TimeoutException:
-        logging.error("Timeout waiting for page to load")
+        logging.error(f"Timeout waiting for sold items page to load: {search_url}")
 
 def extract_sold_items(driver):
     items = driver.find_elements(By.XPATH, '//div[contains(@class, "s-item__wrapper")]')[:11]
