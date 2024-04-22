@@ -14,6 +14,8 @@ import psycopg2
 from datetime import timedelta
 from selenium import webdriver
 import mysql.connector
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -21,42 +23,11 @@ logging.basicConfig(level=logging.INFO)
 # eBay URL to scrape
 ebay_url = "https://www.ebay.ca/sch/i.html?_from=R40&_nkw=Pokemon+Cards&_sacat=0&_sop=1&_ipg=60"
 
-def initialize_mysql():
-    db = mysql.connector.connect(
-        host="127.0.0.1",
-        port=3306,
-        user="root",
-        password="jahaka961",
-        database="steals"
-    )
-    logging.info("Initialized MySQL connection")
-    return db
-
-def create_table(db):
-    cursor = db.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS items (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            title VARCHAR(255),
-            total_price DECIMAL(10, 2),
-            bids INT,
-            time_left VARCHAR(255),
-            average_price DECIMAL(10, 2)
-        )
-    """)
-    db.commit()
-    logging.info("Created table")
-
-def insert_item_details(db, title, total_price, bids, time_left, average_price):
-    cursor = db.cursor()
-    query = """
-        INSERT INTO items (title, total_price, bids, time_left, average_price)
-        VALUES (%s, %s, %s, %s, %s)
-    """
-    values = (title, total_price, bids, time_left, average_price)
-    cursor.execute(query, values)
-    db.commit()
-    logging.info(f"Inserted item details into MySQL: {title}, {total_price}, {bids}, {time_left}, {average_price}")
+def append_data_to_sheet(data):
+    # Use the service account key file you downloaded when you created the service account
+    scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
+    creds = ServiceAccountCredentials.from_json_keyfile_name('/home/vancouvercardboys/vcb/my-happy-project-420812-cf38e310d9cd.json', scope)
+    client = gspread.authorize(creds)
 
 def setup_driver():
     options = Options()
@@ -239,7 +210,7 @@ def print_steal_or_pass(total_price, average_price):
 def scrape_ebay():
     try:
         driver = setup_driver()
-        db = initialize_mysql()  # Initialize MySQL
+        gc = initialize_gspread()  # Initialize Google Sheets
 
         any_steals = False  # Add this line
 
@@ -263,7 +234,7 @@ def scrape_ebay():
                     if total_price <= 0.6 * average_price:
                         print("Steal")
                         any_steals = True  # Add this line
-                        insert_item_details(db, title, total_price, bids, time_left_str, average_price)  # Insert item details into MySQL
+                        insert_item_details(gc, title, total_price, bids, time_left_str, average_price)  # Insert item details into Google Sheets
                     else:
                         print("Pass")
 
@@ -276,7 +247,7 @@ def scrape_ebay():
 
         if not any_steals:  # Add this block
             print("Only Passes")
-            insert_item_details(db, "Only Passes", 0, 0, "0", 0)
+            insert_item_details(gc, "Only Passes", 0, 0, "0", 0)
 
         driver.quit()
     except Exception as e:
