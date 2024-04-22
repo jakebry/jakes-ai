@@ -23,11 +23,35 @@ logging.basicConfig(level=logging.INFO)
 # eBay URL to scrape
 ebay_url = "https://www.ebay.ca/sch/i.html?_from=R40&_nkw=Pokemon+Cards&_sacat=0&_sop=1&_ipg=60"
 
-def append_data_to_sheet(data):
+def initialize_gspread():
     # Use the service account key file you downloaded when you created the service account
     scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
     creds = ServiceAccountCredentials.from_json_keyfile_name('/home/vancouvercardboys/vcb/my-happy-project-420812-cf38e310d9cd.json', scope)
     client = gspread.authorize(creds)
+    return client
+
+def append_data_to_sheet(client, spreadsheet_id, data):
+    # Open the spreadsheet and get the first worksheet
+    spreadsheet = client.open_by_key(spreadsheet_id)
+    worksheet = spreadsheet.get_worksheet(0)
+
+    # Append the data
+    worksheet.append_row(data)
+
+    logging.info(f"Appended data to Google Sheet: {data}")
+
+def insert_item_details(client, spreadsheet_id, title, total_price, bids, time_left_str, average_price):
+    # Open the spreadsheet and get the first worksheet
+    spreadsheet = client.open_by_key(spreadsheet_id)
+    worksheet = spreadsheet.get_worksheet(0)
+
+    # Prepare the data
+    data = [title, total_price, bids, time_left_str, average_price]
+
+    # Append the data
+    worksheet.append_row(data)
+
+    logging.info(f"Inserted item details into Google Sheet: {data}")
 
 def setup_driver():
     options = Options()
@@ -193,13 +217,6 @@ def extract_sold_items(driver):
     print(f"Calculated average price: {average_price}")
     return total_prices
 
-def insert_item_details(db, title, total_price, bids, time_left, average_price):
-    cursor = db.cursor()
-    sql = "INSERT INTO items (title, total_price, bids, time_left, average_price) VALUES (%s, %s, %s, %s, %s)"
-    val = (title, total_price, bids, time_left, average_price)
-    cursor.execute(sql, val)
-    db.commit()
-    logging.info(f"Inserted item details into MySQL: {title}, {total_price}, {bids}, {time_left}, {average_price}")
 
 def print_steal_or_pass(total_price, average_price):
     if total_price <= 0.6 * average_price:
