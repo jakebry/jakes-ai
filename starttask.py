@@ -216,6 +216,8 @@ def scrape_ebay():
         driver = setup_driver()
         db = initialize_firestore()  # Initialize Firestore
 
+        any_steals = False  # Add this line
+
         page_number = 1
         while True:
             current_url = f"{ebay_url}&_pgn={page_number}"
@@ -235,6 +237,7 @@ def scrape_ebay():
                     print_item_details(title, total_price, bids, time_left_str, average_price)
                     if total_price <= 0.6 * average_price:
                         print("Steal")
+                        any_steals = True  # Add this line
                         insert_item_details(db, title, total_price, bids, time_left_str, average_price)  # Insert item details into Firestore
                     else:
                         print("Pass")
@@ -245,6 +248,10 @@ def scrape_ebay():
                 break
 
             page_number += 1
+
+        if not any_steals:  # Add this block
+            print("Only Passes")
+            insert_item_details(db, "Only Passes", 0, 0, "0", 0)
 
         driver.quit()
     except Exception as e:
