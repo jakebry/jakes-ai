@@ -53,6 +53,13 @@ def insert_item_details(client, spreadsheet_id, title, total_price, bids, time_l
 
     logging.info(f"Inserted item details into Google Sheet: {data}")
 
+def print_item_details(title, total_price, bids, time_left_str, average_price):
+    print(f"Title: {title}")
+    print(f"Total Price: {total_price}")
+    print(f"Bids: {bids}")
+    print(f"Time Left: {time_left_str}")
+    print(f"Average Price: {average_price}")
+
 def setup_driver():
     options = Options()
     options.add_argument("--headless")
@@ -242,12 +249,12 @@ def scrape_ebay():
                 title, price_str, shipping_cost_str, time_left_str, bids = extract_item_details(item)
                 time_left = convert_time_left(time_left_str)
                 total_price = calculate_total_price(price_str, shipping_cost_str)
+                print_item_details(title, total_price, bids, time_left_str, average_price)
 
                 if time_left is not None and timedelta(minutes=9) <= time_left <= timedelta(minutes=10):
                     fetch_sold_items_page(driver, title)
                     sold_item_prices = extract_sold_items(driver)
                     average_price = sum(sold_item_prices) / len(sold_item_prices) if sold_item_prices else 0
-                    print_item_details(title, total_price, bids, time_left_str, average_price)
                     if total_price <= 0.6 * average_price:
                         print("Steal")
                         any_steals = True  # Add this line
