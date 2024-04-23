@@ -235,6 +235,7 @@ def print_steal_or_pass(total_price, average_price):
         print("Pass")
 
 def scrape_ebay():
+    average_price = 0  # Initialize average_price
     try:
         driver = setup_driver()
         gc = initialize_gspread()  # Initialize Google Sheets
