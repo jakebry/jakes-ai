@@ -29,6 +29,8 @@ def initialize_gspread():
     client = gspread.authorize(creds)
     return client
 
+spreadsheet_id = '1oWcm23sL7HslyHybm8mMrOcevLRhxMoWnIDUIDOXmF4'  
+
 def append_data_to_sheet(client, spreadsheet_id, data):
     # Open the spreadsheet and get the first worksheet
     spreadsheet = client.open_by_key(spreadsheet_id)
@@ -39,9 +41,9 @@ def append_data_to_sheet(client, spreadsheet_id, data):
 
     logging.info(f"Appended data to Google Sheet: {data}")
 
-def insert_item_details(client, spreadsheet_id, title, total_price, bids, time_left_str, average_price):
+def insert_item_details(gc, title, total_price, bids, time_left_str, average_price):
     # Open the spreadsheet and get the first worksheet
-    spreadsheet = client.open_by_key(spreadsheet_id)
+    spreadsheet = gc.open_by_key(spreadsheet_id)
     worksheet = spreadsheet.get_worksheet(0)
 
     # Prepare the data
