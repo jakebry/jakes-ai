@@ -263,8 +263,10 @@ def scrape_ebay():
                     average_price = sum(sold_item_prices) / len(sold_item_prices) if sold_item_prices else 0
                     if total_price <= 0.6 * average_price:
                         print("Steal")
-                        any_steals = True  # Add this line
-                        insert_item_details(gc, title, total_price, bids, time_left_str, average_price)  # Insert item details into Google Sheets
+                        any_steals = True
+                        logging.info(f"Calling insert_item_details with arguments: {gc}, {title}, {total_price}, {bids}, {time_left_str}, {average_price}")
+                        insert_item_details(gc, title, total_price, bids, time_left_str, average_price)
+                        logging.info("Successfully called insert_item_details")
                     else:
                         print("Pass")
 
