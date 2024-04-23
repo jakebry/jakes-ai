@@ -6,6 +6,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 import logging
+from logging.handlers import TimedRotatingFileHandler
 from selenium.common.exceptions import TimeoutException
 import time
 import re
@@ -16,8 +17,20 @@ from selenium import webdriver
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
+# Create a logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+# Create a timed rotating file handler that rotates the log file every 120 seconds
+handler = TimedRotatingFileHandler('./rotatinglog.log', when='s', interval=120, backupCount=0)
+handler.setLevel(logging.INFO)
+
+# Create a formatter and add it to the handler
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+
+# Add the handler to the logger
+logger.addHandler(handler)
 
 # eBay URL to scrape
 ebay_url = "https://www.ebay.ca/sch/i.html?_from=R40&_nkw=Pokemon+Cards&_sacat=0&_sop=1&_ipg=60"
@@ -39,7 +52,7 @@ def append_data_to_sheet(client, spreadsheet_id, data):
     # Append the data
     worksheet.append_row(data)
 
-    logging.info(f"Appended data to Google Sheet: {data}")
+    logger.info(f"Appended data to Google Sheet: {data}")
 
 def insert_item_details(gc, title, total_price, bids, time_left_str, average_price, img_src):
     # Open the spreadsheet and get the first worksheet
@@ -52,7 +65,7 @@ def insert_item_details(gc, title, total_price, bids, time_left_str, average_pri
     # Append the data
     worksheet.append_row(data)
 
-    logging.info(f"Inserted item details into Google Sheet: {data}")
+    logger.info(f"Inserted item details into Google Sheet: {data}")
 
 def print_item_details(title, total_price, bids, time_left_str, average_price):
     print(f"Title: {title}")
@@ -73,7 +86,7 @@ def setup_driver():
 def fetch_page(driver, url):
     # Fetch eBay page
     driver.get(url)
-    logging.info(f"Fetching page: {url}")
+    logger.info(f"Fetching page: {url}")
     try:
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//div[contains(@class, "s-item__wrapper")]')))
     except Exception as e:
@@ -82,13 +95,13 @@ def fetch_page(driver, url):
 def parse_page(driver):
     # Parse page source with BeautifulSoup
     soup = BeautifulSoup(driver.page_source, 'html.parser')
-    logging.info(f"Parsed page with BeautifulSoup")
+    logger.info(f"Parsed page with BeautifulSoup")
     return soup
 
 def extract_items(soup):
     # Extract item titles, prices, bids, and time left
     items = soup.find_all('div', class_='s-item__wrapper')
-    logging.info(f"Extracted {len(items)} items from the page.")
+    logger.info(f"Extracted {len(items)} items from the page.")
     return items
 
 def extract_item_details(item):
@@ -106,7 +119,7 @@ def extract_item_details(item):
     bids = bids_element.text.strip() if bids_element else 'No bids'
     img_src = img_element['src'] if img_element else None # Maybe Change This
 
-    logging.info(f"Extracted details for item: {title}, Price: {price_str}, Shipping cost: {shipping_cost_str}, Time left: {time_left_str}, Bids: {bids}, Image: {img_src}")
+    logger.info(f"Extracted details for item: {title}, Price: {price_str}, Shipping cost: {shipping_cost_str}, Time left: {time_left_str}, Bids: {bids}, Image: {img_src}")
 
     return title, price_str, shipping_cost_str, time_left_str, bids, img_src
 
@@ -131,7 +144,7 @@ def convert_time_left(time_left_str):
                     time_left = timedelta(hours=int(part.replace('h', '')))
 
         if time_left is None:
-            logging.error(f"Unexpected time_left format: {time_left_str}")
+            logger.error(f"Unexpected time_left format: {time_left_str}")
 
         return time_left
     else:
@@ -142,7 +155,7 @@ def calculate_total_price(price_str, shipping_cost_str):
     try:
         price = float(re.search(r'\d+\.\d+', price_str).group())
     except ValueError:
-        logging.error(f"Unexpected price format: {price_str}")
+        logger.error(f"Unexpected price format: {price_str}")
         price = 0.0  # Assume price is 0 if it cannot be converted to a float
 
     # Check if shipping_cost_str is "Free shipping"
@@ -173,7 +186,7 @@ def navigate_to_url(driver, title):
         # Wait for the page to load and the title element to be present
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//div[@class="s-item__title"]/span[@role="heading" and @aria-level="3"]')))
     except TimeoutException:
-        logging.error("Timeout waiting for page to load")
+        logger.error("Timeout waiting for page to load")
 
 def check_checkboxes(driver):
     try:
@@ -183,7 +196,7 @@ def check_checkboxes(driver):
         driver.find_element(By.XPATH, '//input[@class="checkbox__control" and @aria-label="Sold Items"]').click()
         driver.find_element(By.XPATH, '//input[@class="checkbox__control" and @aria-label="Completed Items"]').click()
     except Exception as e:
-        logging.error(f"Error clicking checkboxes: {e}")
+        logger.error(f"Error clicking checkboxes: {e}")
 
 def fetch_sold_items_page(driver, title):
     # Construct new eBay search URL
@@ -191,13 +204,13 @@ def fetch_sold_items_page(driver, title):
 
     # Navigate to the search URL
     driver.get(search_url)
-    logging.info(f"Fetching sold items page: {search_url}")
+    logger.info(f"Fetching sold items page: {search_url}")
 
     try:
         # Wait for the page to load and the title element to be present
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//div[@class="s-item__title"]/span[@role="heading" and @aria-level="3"]')))
     except TimeoutException:
-        logging.error(f"Timeout waiting for sold items page to load: {search_url}")
+        logger.error(f"Timeout waiting for sold items page to load: {search_url}")
 
 def extract_sold_items(driver):
     items = driver.find_elements(By.XPATH, '//div[contains(@class, "s-item__wrapper")]')[:11]
@@ -215,7 +228,7 @@ def extract_sold_items(driver):
             if price_match:
                 price = float(price_match.group())
             else:
-                logging.error(f"Unexpected price format: {price_str}")
+                logger.error(f"Unexpected price format: {price_str}")
                 price = 0.0
             shipping_cost = 0.0
             if shipping_cost_str and "Free shipping" not in shipping_cost_str:
@@ -223,7 +236,7 @@ def extract_sold_items(driver):
                 if shipping_cost_match:
                     shipping_cost = float(shipping_cost_match.group())
                 else:
-                    logging.error(f"Unexpected shipping cost format: {shipping_cost_str}")
+                    logger.error(f"Unexpected shipping cost format: {shipping_cost_str}")
             total_price = price + shipping_cost
             total_prices.append(total_price)
             print(f"Added total price {total_price} to the list. Current list: {total_prices}")
@@ -268,9 +281,9 @@ def scrape_ebay():
                     if total_price <= 0.6 * average_price:
                         print("Steal")
                         any_steals = True
-                        logging.info(f"Calling insert_item_details with arguments: {gc}, {title}, {total_price}, {bids}, {time_left_str}, {average_price}, {img_src}")
+                        logger.info(f"Calling insert_item_details with arguments: {gc}, {title}, {total_price}, {bids}, {time_left_str}, {average_price}, {img_src}")
                         insert_item_details(gc, title, total_price, bids, time_left_str, average_price, img_src)
-                        logging.info("Successfully called insert_item_details")
+                        logger.info("Successfully called insert_item_details")
                     else:
                         print("Pass")
 
@@ -287,7 +300,7 @@ def scrape_ebay():
 
         driver.quit()
     except Exception as e:
-        logging.error(f"Error downloading eBay page: {e}")
+        logger.error(f"Error downloading eBay page: {e}")
 
 def main():
     scrape_ebay()
