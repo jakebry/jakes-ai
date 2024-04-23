@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 # Create a timed rotating file handler that rotates the log file every 120 seconds
-handler = TimedRotatingFileHandler('/home/vancouvercardboys/vcb', when='s', interval=120, backupCount=0)
+handler = TimedRotatingFileHandler('/home/vancouvercardboys/vcb/rotlog.log', when='s', interval=120, backupCount=0)
 handler.setLevel(logging.INFO)
 
 # Create a formatter and add it to the handler
