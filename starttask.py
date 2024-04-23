@@ -41,13 +41,13 @@ def append_data_to_sheet(client, spreadsheet_id, data):
 
     logging.info(f"Appended data to Google Sheet: {data}")
 
-def insert_item_details(gc, title, total_price, bids, time_left_str, average_price):
+def insert_item_details(gc, title, total_price, bids, time_left_str, average_price, img_src):
     # Open the spreadsheet and get the first worksheet
     spreadsheet = gc.open_by_key(spreadsheet_id)
     worksheet = spreadsheet.get_worksheet(0)
 
     # Prepare the data
-    data = [title, total_price, bids, time_left_str, average_price]
+    data = [title, total_price, bids, time_left_str, average_price, img_src]
 
     # Append the data
     worksheet.append_row(data)
@@ -97,16 +97,18 @@ def extract_item_details(item):
     shipping_cost_element = item.find('span', {'class': 's-item__shipping s-item__logisticsCost'})
     time_left_element = item.find('span', {'class': 's-item__time-left'})
     bids_element = item.find('span', {'class': 's-item__bids'})
+    img_element = item.find('img', {'class': 's-item__image-img'}) #Change This
 
     title = title_element.text.strip() if title_element else None
     price_str = price_element.text.strip() if price_element else None
     shipping_cost_str = shipping_cost_element.text.strip() if shipping_cost_element else '0'
     time_left_str = time_left_element.text.strip() if time_left_element else None
     bids = bids_element.text.strip() if bids_element else 'No bids'
+    img_src = img_element['src'] if img_element else None # Maybe Change This
 
-    logging.info(f"Extracted details for item: {title}, Price: {price_str}, Shipping cost: {shipping_cost_str}, Time left: {time_left_str}, Bids: {bids}")
+    logging.info(f"Extracted details for item: {title}, Price: {price_str}, Shipping cost: {shipping_cost_str}, Time left: {time_left_str}, Bids: {bids}, Image: {img_src}")
 
-    return title, price_str, shipping_cost_str, time_left_str, bids
+    return title, price_str, shipping_cost_str, time_left_str, bids, img_src
 
 def convert_time_left(time_left_str):
     if time_left_str is not None:
@@ -225,7 +227,7 @@ def extract_sold_items(driver):
             total_price = price + shipping_cost
             total_prices.append(total_price)
             print(f"Added total price {total_price} to the list. Current list: {total_prices}")
-    average_price = sum(total_prices) / len(total_prices) if total_prices else 0
+    average_price = round(sum(total_prices) / len(total_prices), 2) if total_prices else 0
     print(f"Calculated average price: {average_price}")
     return total_prices
 
@@ -254,7 +256,7 @@ def scrape_ebay():
 
             for item in items:
                 average_price = 0  # Initialize average_price
-                title, price_str, shipping_cost_str, time_left_str, bids = extract_item_details(item)
+                title, price_str, shipping_cost_str, time_left_str, bids, img_src = extract_item_details(item)
                 time_left = convert_time_left(time_left_str)
                 total_price = calculate_total_price(price_str, shipping_cost_str)
                 print_item_details(title, total_price, bids, time_left_str, average_price)
@@ -266,8 +268,8 @@ def scrape_ebay():
                     if total_price <= 0.6 * average_price:
                         print("Steal")
                         any_steals = True
-                        logging.info(f"Calling insert_item_details with arguments: {gc}, {title}, {total_price}, {bids}, {time_left_str}, {average_price}")
-                        insert_item_details(gc, title, total_price, bids, time_left_str, average_price)
+                        logging.info(f"Calling insert_item_details with arguments: {gc}, {title}, {total_price}, {bids}, {time_left_str}, {average_price}, {img_src}")
+                        insert_item_details(gc, title, total_price, bids, time_left_str, average_price, img_src)
                         logging.info("Successfully called insert_item_details")
                     else:
                         print("Pass")
@@ -279,9 +281,9 @@ def scrape_ebay():
 
             page_number += 1
 
-        if not any_steals:  # Add this block
+        if not any_steals:
             print("Only Passes")
-            insert_item_details(gc, "Only Passes", "0", "0", "0", "0")
+            insert_item_details(gc, "Only Passes", "0", "0", "0", "0", "None") #Data Collums
 
         driver.quit()
     except Exception as e:
