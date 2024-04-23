@@ -281,7 +281,7 @@ def scrape_ebay():
 
         if not any_steals:  # Add this block
             print("Only Passes")
-            insert_item_details(gc, "Only Passes", "0", "0", "0", "0", "0")
+            insert_item_details(gc, "Only Passes", "0", "0", "0", "0")
 
         driver.quit()
     except Exception as e:
