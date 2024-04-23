@@ -110,14 +110,14 @@ def extract_item_details(item):
     shipping_cost_element = item.find('span', {'class': 's-item__shipping s-item__logisticsCost'})
     time_left_element = item.find('span', {'class': 's-item__time-left'})
     bids_element = item.find('span', {'class': 's-item__bids'})
-    img_element = item.find('img', {'class': 's-item__image-img'}) #Change This
+    img_element = item.find('div', {'class': 's-item__image-wrapper'}).find('img')
 
     title = title_element.text.strip() if title_element else None
     price_str = price_element.text.strip() if price_element else None
     shipping_cost_str = shipping_cost_element.text.strip() if shipping_cost_element else '0'
     time_left_str = time_left_element.text.strip() if time_left_element else None
     bids = bids_element.text.strip() if bids_element else 'No bids'
-    img_src = img_element['src'] if img_element else None # Maybe Change This
+    img_src = img_element['src'] if img_element else None 
 
     logger.info(f"Extracted details for item: {title}, Price: {price_str}, Shipping cost: {shipping_cost_str}, Time left: {time_left_str}, Bids: {bids}, Image: {img_src}")
 
