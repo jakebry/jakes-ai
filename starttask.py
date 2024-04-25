@@ -217,14 +217,14 @@ def extract_sold_items(driver):
     items = driver.find_elements(By.XPATH, '//div[contains(@class, "s-item__wrapper")]')[:10]
     total_prices = []
     for item in items:
-        price_element = item.find_element(By.XPATH, './/span[contains(@class, "s-item__price") and not(contains(@class, "STRIKETHROUGHPOSITIVEITALIC"))]')
+        price_element = item.find_element(By.XPATH, './/span[contains(@class, "s-item__price") and not(contains(@class, "STRIKETHROUGH")) and not(contains(@class, "POSITIVEITALIC"))]')
         price_str = price_element.text.strip() if price_element else None
         try:
             shipping_cost_element = item.find_element(By.XPATH, './/span[contains(@class, "s-item__shipping s-item__logisticsCost")]')
             shipping_cost_str = shipping_cost_element.text.strip() if shipping_cost_element else None
         except NoSuchElementException:
             shipping_cost_str = None
-        if price_str and not re.search(r'C \$\d+\.\d+ to C\$\d+\.\d+', price_str) and not re.search(r'<s>.*</s>', price_str) and "STRIKETHROUGHPOSITIVEITALIC" not in price_str:
+        if price_str and not re.search(r'C \$\d+\.\d+ to C\$\d+\.\d+', price_str) and not re.search(r'<s>.*</s>', price_str):
             price_match = re.search(r'\d+\.\d+', price_str)
             if price_match:
                 price = float(price_match.group())
