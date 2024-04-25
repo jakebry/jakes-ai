@@ -214,7 +214,7 @@ def fetch_sold_items_page(driver, title):
 
 def extract_sold_items(driver):
     logger.info("Called extract_sold_items")
-    items = driver.find_elements(By.XPATH, '//div[contains(@class, "s-item__wrapper")]')[:10]
+    items = driver.find_elements(By.XPATH, '//div[contains(@class, "s-item__wrapper")]')[:6]
     total_prices = []
     for item in items:
         price_element = item.find_element(By.XPATH, './/span[contains(@class, "s-item__price") and not(contains(@class, "STRIKETHROUGH")) and not(contains(@class, "POSITIVEITALIC"))]')
