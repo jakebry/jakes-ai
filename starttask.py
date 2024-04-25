@@ -213,6 +213,7 @@ def fetch_sold_items_page(driver, title):
         logger.error(f"Timeout waiting for sold items page to load: {search_url}")
 
 def extract_sold_items(driver):
+    logger.info("Called extract_sold_items")
     items = driver.find_elements(By.XPATH, '//div[contains(@class, "s-item__wrapper")]')[:11]
     total_prices = []
     for item in items:
@@ -239,9 +240,9 @@ def extract_sold_items(driver):
                     logger.error(f"Unexpected shipping cost format: {shipping_cost_str}")
             total_price = price + shipping_cost
             total_prices.append(total_price)
-            print(f"Added total price {total_price} to the list. Current list: {total_prices}")
+            logger.info(f"Added total price {total_price} to the list. Current list: {total_prices}")
     average_price = round(sum(total_prices) / len(total_prices), 2) if total_prices else 0
-    print(f"Calculated average price: {average_price}")
+    logger.info(f"Calculated average price: {average_price}")
     return total_prices
 
 
