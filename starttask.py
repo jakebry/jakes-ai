@@ -282,7 +282,7 @@ def scrape_ebay():
                     if total_price <= 0.6 * average_price:
                         print("Steal")
                         any_steals = True
-                        logger.info(f"Calling insert_item_details with arguments: {gc}, {title}, {total_price}, {bids}, {time_left_str}, {average_price}, {img_src}")
+                        logger.info(f"Calling insert_item_details with arguments: {gc}, {title}, {total_price}, {bids}, {time_left_str}, {average_price},")
                         insert_item_details(gc, title, total_price, bids, time_left_str, average_price, img_src)
                         logger.info("Successfully called insert_item_details")
                     else:
