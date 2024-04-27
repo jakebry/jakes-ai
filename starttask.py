@@ -252,7 +252,7 @@ def print_steal_or_pass(total_price, average_price):
 
 def scrape_ebay():
     average_price = 0  # Initialize average_price
-    keywords = ['mcdonalds', 'keyword2', 'keyword3']  # Keywords To Exclude From Title search
+    keywords = ['mcdonalds', 'Japanese', 'Bundle', 'Lot']  # Keywords To Exclude From Title search
     try:
         driver = setup_driver()
         gc = initialize_gspread()  # Initialize Google Sheets
