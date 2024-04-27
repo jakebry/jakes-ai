@@ -241,7 +241,7 @@ def extract_sold_items(driver):
             logger.info(f"Added total price {total_price} to the list. Current list: {total_prices}")
     average_price = round(sum(total_prices) / len(total_prices), 2) if total_prices else 0
     logger.info(f"Calculated average price: {average_price}")
-    return total_prices
+    return average_price  # Return the average price instead of the list of total prices
 
 
 def print_steal_or_pass(total_price, average_price):
