@@ -281,8 +281,7 @@ def scrape_ebay():
                         continue
 
                     fetch_sold_items_page(driver, title)
-                    sold_item_prices = extract_sold_items(driver)
-                    average_price = sum(sold_item_prices) / len(sold_item_prices) if sold_item_prices else 0
+                    average_price = extract_sold_items(driver)
                     if total_price <= 0.6 * average_price:
                         print("Steal")
                         any_steals = True
