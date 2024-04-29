@@ -209,14 +209,24 @@ def fetch_sold_items_page(driver, title):
 
 def extract_sold_items(driver):
     logger.info("Called extract_sold_items")
-    items = driver.find_elements(By.XPATH, '//div[contains(@class, "s-item__wrapper")]')[:6]
+    items = driver.find_elements(By.XPATH, '//li[contains(@class, "s-item")]')
+    items.sort(key=lambda item: item.location['y'])  # Sort items by their y position
+    items = items[:6]  # Take the first 6 items
     total_prices = []
     for item in items:
-        price_element = item.find_element(By.XPATH, './/span[contains(@class, "s-item__price") and not(contains(@class, "STRIKETHROUGH")) and not(contains(@class, "POSITIVEITALIC"))]')
-        price_str = price_element.text.strip() if price_element else None
+        logger.info(item.get_attribute('outerHTML'))  # Log the outer HTML of the item
+        try:
+            price_element = item.find_element(By.XPATH, './/span[contains(@class, "s-item__price")]/span[contains(@class, "POSITIVE") or contains(@class, "POSITIVE ITALIC")]')
+            price_str = price_element.text.strip() if price_element else None
+            logger.info(f"Extracted price: {price_str}")  # Log the extracted price
+            logger.info(price_element.get_attribute('outerHTML'))  # Log the outer HTML of the price element
+        except NoSuchElementException:
+            logger.info("Item does not contain a price. Skipping to next item.")
+            continue
         try:
             shipping_cost_element = item.find_element(By.XPATH, './/span[contains(@class, "s-item__shipping s-item__logisticsCost")]')
             shipping_cost_str = shipping_cost_element.text.strip() if shipping_cost_element else None
+            logger.info(f"Extracted shipping cost: {shipping_cost_str}")  # Log the extracted shipping cost
         except NoSuchElementException:
             shipping_cost_str = None
         if price_str and not re.search(r'C \$\d+\.\d+ to C\$\d+\.\d+', price_str) and not re.search(r'<s>.*</s>', price_str):
@@ -227,19 +237,20 @@ def extract_sold_items(driver):
                 logger.error(f"Unexpected price format: {price_str}")
                 price = 0.0
             shipping_cost = 0.0
-            if shipping_cost_str and "Free shipping" not in shipping_cost_str:
+            if shipping_cost_str and "FREE" not in shipping_cost_str:
                 shipping_cost_match = re.search(r'\d+\.\d+', shipping_cost_str)
                 if shipping_cost_match:
                     shipping_cost = float(shipping_cost_match.group())
                 else:
                     logger.error(f"Unexpected shipping cost format: {shipping_cost_str}")
+            else:
+                shipping_cost = 0.0
             total_price = price + shipping_cost
             total_prices.append(total_price)
             logger.info(f"Added total price {total_price} to the list. Current list: {total_prices}")
     average_price = round(sum(total_prices) / len(total_prices), 2) if total_prices else 0
     logger.info(f"Calculated average price: {average_price}")
     return average_price  # Return the average price instead of the list of total prices
-
 
 def print_steal_or_pass(total_price, average_price):
     if total_price <= 0.6 * average_price:
@@ -249,7 +260,7 @@ def print_steal_or_pass(total_price, average_price):
 
 def scrape_ebay():
     average_price = 0  # Initialize average_price
-    keywords = ['mcdonalds', 'keyword2', 'keyword3']  # Keywords To Exclude From Title search
+    keywords = ['', '', '', ""]  # Keywords To Exclude From Title search
     try:
         driver = setup_driver()
         gc = initialize_gspread()  # Initialize Google Sheets
