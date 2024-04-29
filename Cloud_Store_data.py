@@ -127,6 +127,7 @@ def extract_item_details(item):
     title_element = item.find('div', {'class': 's-item__title'}).find('span', {'role': 'heading'})
     price_element = item.find('span', {'class': 's-item__price'})
     shipping_cost_element = item.find('span', {'class': 's-item__shipping s-item__logisticsCost'})
+    logger.info(f"Found shipping cost element: {shipping_cost_element}")
     time_left_element = item.find('span', {'class': 's-item__time-left'})
     bids_element = item.find('span', {'class': 's-item__bids'})
     img_element = item.find('div', {'class': 's-item__image-wrapper'}).find('img')
