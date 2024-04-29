@@ -284,7 +284,7 @@ def scrape_ebay():
 
                 if time_left is not None and timedelta(minutes=9) <= time_left <= timedelta(minutes=10):
                     # Check if any keyword is in the title
-                    if any(keyword in title.split() for keyword in keywords):
+                    if any(keyword.lower() in title.lower().split() for keyword in keywords):
                         logger.info(f"Item not a steal, keyword found in title: {title}")
                         continue
 
