@@ -107,6 +107,9 @@ def fetch_page(driver, url):
     logger.info(f"Fetching page: {url}")
     try:
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//div[contains(@class, "s-item__wrapper")]')))
+        # Save the page source to a new HTML file
+        with open('ebay_new.html', 'w') as f:
+            f.write(driver.page_source)
     except Exception as e:
         logging.error(f"Error fetching page {url}: {e}")
 
